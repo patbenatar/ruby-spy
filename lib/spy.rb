@@ -61,10 +61,6 @@ class Spy
     spying_on_all_instances? ? obj : singleton_class
   end
 
-  def spy_method_definer_name
-    spying_on_all_instances? ? :define_method : :define_singleton_method
-  end
-
   def spy_on(method_name)
     spy = self
     aliased_original_method_name = "#{method_name}_before_spy".to_sym
@@ -75,7 +71,7 @@ class Spy
       method_name
     )
 
-    obj.send(spy_method_definer_name, method_name) do |*args, &block|
+    target_obj.send(:define_method, method_name) do |*args, &block|
       spy.calls << Call.new(method_name, args, block)
       send aliased_original_method_name, *args, &block
     end
