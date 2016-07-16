@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'pry'
 
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
@@ -13,4 +15,10 @@ RSpec.configure do |config|
   end
 
   config.shared_context_metadata_behavior = :apply_to_host_groups
+
+  config.order = :random
+  config.color = true
+
+  config.filter_run focus: true
+  config.run_all_when_everything_filtered = true
 end

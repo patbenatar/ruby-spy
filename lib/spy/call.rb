@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Spy::Call
   attr_reader :method_name, :args, :block
 

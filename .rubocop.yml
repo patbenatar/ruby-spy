@@ -19,3 +19,4 @@ DoubleNegation:
 AllCops:
   Exclude:
     - "bin/**/*"
+    - "Guardfile"

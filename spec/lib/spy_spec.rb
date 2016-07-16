@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 class MockObject
-  attr_accessor :method_1_called, :method_2_called
+  attr_reader :method_1_called, :method_2_called
 
   def initialize
     @method_1_called = false
@@ -47,6 +49,13 @@ describe Spy do
       expect { mock.foo_bar }.to raise_error NoMethodError
     end
 
+    it 'doesnt spy on Ruby Class instance methods' do
+      spy = Spy.on(mock)
+      mock.to_s
+
+      expect(spy.calls.count).to eq 0
+    end
+
     context 'spy on just one method' do
       it 'logs calls to the given method' do
         spy = Spy.on(mock, :method_1)
@@ -79,13 +88,64 @@ describe Spy do
     end
 
     context 'spy on a class' do
-      it 'spies on class methods'
-      pending 'how to spy on all instance methods for a class?'
+      it 'spies on class methods' do
+        mock_class = Class.new do
+          def self.method_1
+          end
+        end
+
+        spy = Spy.on(mock_class)
+        mock_class.method_1
+
+        expect(spy.calls.count).to eq 1
+        expect(spy.calls[0].method_name).to eq :method_1
+      end
+
+      it 'doesnt spy on Ruby Class methods' do
+        mock_class = Class.new do
+          def self.method_1
+          end
+        end
+
+        spy = Spy.on(mock_class)
+        mock_class.constants
+
+        expect(spy.calls.count).to eq 0
+      end
     end
 
     context 'spy on a module' do
-      it 'spies on module methods'
-      pending 'how to spy on module methods that get mixed into a class?'
+      it 'spies on module methods' do
+        module MockModule
+          def self.method_1
+          end
+        end
+
+        spy = Spy.on(MockModule)
+        MockModule.method_1
+
+        expect(spy.calls.count).to eq 1
+        expect(spy.calls[0].method_name).to eq :method_1
+      end
+    end
+  end
+
+  describe '.on_all_instances_of' do
+    it 'spies on all instances of a class' do
+      mock_class = Class.new do
+        def method_1
+        end
+      end
+
+      spy = Spy.on_all_instances_of(mock_class)
+
+      mock_1 = mock_class.new
+      mock_1.method_1
+
+      mock_2 = mock_class.new
+      mock_2.method_1
+
+      expect(spy.calls.count).to eq 2
     end
   end
 
