@@ -1,4 +1,4 @@
-# Ruby Spy
+# Ruby Spy [![Build Status](https://travis-ci.org/patbenatar/ruby_spy.svg?branch=master)](https://travis-ci.org/patbenatar/ruby_spy)
 
 Test spies for Ruby. Why? For fun.
 
