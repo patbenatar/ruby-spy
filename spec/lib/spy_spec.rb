@@ -14,6 +14,7 @@ class MockObject
 
   def method_with_args(_arg_1, _arg_2)
     @method_with_args_called = true
+    'args response'
   end
 
   def method_with_block(_arg_1, &_block)
@@ -195,6 +196,69 @@ describe Spy do
 
         expect(spy.calls(:method_1).length).to eq 2
         expect(spy.calls(:method_with_args).length).to eq 1
+      end
+    end
+  end
+
+  describe '#clean' do
+    context 'all methods spied on' do
+      it 'removes previously created spies' do
+        spy = Spy.on(mock)
+        spy.clean
+
+        expect(mock.method_1).to eq true
+        expect(mock.method_with_args('foo', 'bar')).to eq 'args response'
+
+        expect(spy.calls.count).to eq 0
+      end
+    end
+
+    context 'one method spied on' do
+      it 'removes previously created spies' do
+        spy = Spy.on(mock, :method_1)
+        spy.clean
+
+        expect(mock.method_1).to eq true
+
+        expect(spy.calls.count).to eq 0
+      end
+    end
+
+    context 'two methods spied on' do
+      it 'removes previously created spies' do
+        spy = Spy.on(mock, :method_1)
+        spy.on(:method_with_args)
+        spy.clean
+
+        expect(mock.method_1).to eq true
+        expect(mock.method_with_args('foo', 'bar')).to eq 'args response'
+
+        expect(spy.calls.count).to eq 0
+      end
+    end
+  end
+
+  describe '#dirty?' do
+    context 'before spying' do
+      it 'is false' do
+        spy = Spy.new(mock)
+        expect(spy.dirty?).to eq false
+      end
+    end
+
+    context 'after spying' do
+      it 'is true' do
+        spy = Spy.on(mock)
+        expect(spy.dirty?).to eq true
+      end
+    end
+
+    context 'after cleaning' do
+      it 'is false' do
+        spy = Spy.on(mock)
+        spy.clean
+
+        expect(spy.dirty?).to eq false
       end
     end
   end

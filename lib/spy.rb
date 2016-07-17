@@ -20,6 +20,7 @@ class Spy
   def initialize(obj, all_instances: false)
     @obj = obj
     @calls = []
+    @actively_spied_methods = []
     @all_instances = all_instances
   end
 
@@ -39,9 +40,17 @@ class Spy
     end
   end
 
+  def clean
+    actively_spied_methods.dup.each { |m| remove_spy(m) }
+  end
+
+  def dirty?
+    actively_spied_methods.any?
+  end
+
   private
 
-  attr_reader :all_instances
+  attr_reader :all_instances, :actively_spied_methods
 
   def all_methods
     if spying_on_class?
@@ -63,7 +72,7 @@ class Spy
 
   def spy_on(method_name)
     spy = self
-    aliased_original_method_name = "#{method_name}_before_spy".to_sym
+    aliased_original_method_name = original_method_name(method_name)
 
     target_obj.send(
       :alias_method,
@@ -75,6 +84,22 @@ class Spy
       spy.calls << Call.new(method_name, args, block)
       send aliased_original_method_name, *args, &block
     end
+
+    actively_spied_methods << method_name
+  end
+
+  def remove_spy(method_name)
+    aliased_original_method_name = original_method_name(method_name)
+
+    target_obj.send(
+      :alias_method,
+      method_name,
+      aliased_original_method_name
+    )
+
+    target_obj.send(:remove_method, aliased_original_method_name)
+
+    actively_spied_methods.delete(method_name)
   end
 
   def spying_on_class?
@@ -83,5 +108,9 @@ class Spy
 
   def spying_on_all_instances?
     !!all_instances
+  end
+
+  def original_method_name(method_name)
+    "#{method_name}_before_spy".to_sym
   end
 end
