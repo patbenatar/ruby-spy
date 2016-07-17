@@ -29,4 +29,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'guard-rspec', '~> 4.7', '>= 4.7.2'
   spec.add_development_dependency 'pry-byebug', '~> 3.4'
   spec.add_development_dependency 'rubocop', '~> 0.41.2'
+  spec.add_development_dependency 'coveralls'
 end
