@@ -10,7 +10,20 @@ Spy on all methods of an instance:
 spy = Spy.on(my_object)
 spy.some_method
 expect(spy.calls.count).to eq 1
-expect(spy.calls.first.method_name).to eq :some_method
+expect(spy.calls.last.method_name).to eq :some_method
+```
+
+Spy on arguments:
+
+```ruby
+spy = Spy.on(my_object)
+
+spy.some_method_with_args('foo', 'bar')
+expect(spy.calls.last.args).to eq %w(foo bar)
+
+block = -> {}
+spy.some_method_with_block(&block)
+expect(spy.calls.last.block).to eq block
 ```
 
 Spy on one method:
