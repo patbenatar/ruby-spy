@@ -38,3 +38,23 @@ SomeClass.new.some_method
 SomeClass.new.some_method
 expect(spy.calls.count).to eq 2
 ```
+
+Clean up after yourself:
+
+```ruby
+Spy.clean
+```
+
+Or keep a block clean:
+
+```ruby
+Spy.clean do
+  Spy.on(my_object)
+end
+```
+
+Cleaning with RSpec:
+
+```ruby
+before(:each) { Spy.clean }
+```

@@ -25,10 +25,17 @@ end
 describe Spy do
   let(:mock) { MockObject.new }
 
+  before(:each) { Thread.current[Spy::THREAD_LOCAL_ACTIVE_SPIES_KEY] = nil }
+
   describe '.on' do
     it 'returns a spy' do
       spy = Spy.on(mock)
       expect(spy).to be_an_instance_of Spy
+    end
+
+    it 'registers itself with Spy' do
+      spy = Spy.on(mock)
+      expect(Spy.active_spies).to include spy
     end
 
     it 'logs calls to any method called on the given object' do
@@ -148,6 +155,141 @@ describe Spy do
     end
   end
 
+  describe '.clean' do
+    it 'cleans up all registered spies' do
+      spy = Spy.on(mock)
+
+      mock_2 = MockObject.new
+      spy_2 = Spy.on(mock_2, :method_1)
+
+      Spy.clean
+
+      expect(mock.method_1).to eq true
+      expect(mock.method_with_args('foo', 'bar')).to eq 'args response'
+      expect(mock_2.method_1).to eq true
+
+      expect(spy.calls.count).to eq 0
+      expect(spy_2.calls.count).to eq 0
+    end
+
+    it 'resets active_spies to empty' do
+      Spy.on(mock)
+      expect { Spy.clean }.to change { Spy.active_spies.count }.to(0)
+    end
+
+    context 'with a block' do
+      it 'executes the block' do
+        executed = false
+        Spy.clean { executed = true }
+        expect(executed).to eq true
+      end
+
+      it 'cleans up after the execution of the block' do
+        Spy.clean do
+          spy = Spy.on(mock)
+          mock.method_1
+          expect(spy.calls.count).to eq 1
+        end
+
+        expect(Spy.active_spies.count).to eq 0
+      end
+
+      it 'does not clean up the outer scope' do
+        outer_spy = Spy.on(mock)
+
+        expect do
+          Spy.clean do
+            inner_mock = MockObject.new
+            inner_spy = Spy.on(inner_mock)
+            inner_mock.method_1
+            expect(inner_spy.calls.count).to eq 1
+          end
+        end.not_to change { Spy.active_spies }
+
+        expect(Spy.active_spies).to eq [outer_spy]
+      end
+
+      it 'supports nesting of blocks' do
+        outer_spy = Spy.on(mock)
+
+        expect do
+          Spy.clean do
+            inner_1_mock = MockObject.new
+            inner_1_spy = Spy.on(inner_1_mock)
+            inner_1_mock.method_1
+
+            Spy.clean do
+              inner_2_mock = MockObject.new
+              inner_2_spy = Spy.on(inner_2_mock)
+              inner_2_mock.method_1
+
+              expect(Spy.active_spies).to eq [inner_2_spy]
+            end
+
+            expect(Spy.active_spies).to eq [inner_1_spy]
+          end
+        end.not_to change { Spy.active_spies }
+
+        expect(Spy.active_spies).to eq [outer_spy]
+      end
+
+      context 'if the block raises' do
+        it 'still cleans up' do
+          MockException = Class.new(StandardError)
+
+          expect do
+            Spy.clean do
+              spy = Spy.on(mock)
+              expect(Spy.active_spies).to eq [spy]
+              raise MockException
+            end
+          end.to raise_error MockException
+
+          expect(Spy.active_spies.count).to eq 0
+        end
+      end
+    end
+  end
+
+  describe '.register' do
+    let(:spy) { double('spy') }
+
+    it 'does not add duplicates' do
+      Spy.register(spy)
+      Spy.register(spy)
+      expect(Spy.active_spies.count).to eq 1
+    end
+
+    it 'adds the given spy to the set of active spies' do
+      Spy.register(spy)
+      expect(Spy.active_spies).to include spy
+    end
+  end
+
+  describe '#on' do
+    context 'spy has previously been cleaned' do
+      it 're-registers itself as active with Spy' do
+        spy = Spy.on(mock)
+        spy.clean
+
+        expect { spy.on(:method_1) }.to change { Spy.active_spies.count }.to(1)
+        expect(Spy.active_spies).to include spy
+      end
+    end
+  end
+
+  describe '#on_all' do
+    context 'spy has previously been cleaned' do
+      it 're-registers itself as active with Spy' do
+        spy = Spy.on(mock)
+        spy.clean
+
+        expect { spy.on_all }.to change { Spy.active_spies.count }.to(1)
+        expect(Spy.active_spies).to include spy
+      end
+    end
+  end
+
   describe '#calls' do
     it 'returns the set of all calls made to the object' do
       spy = Spy.on(mock)
@@ -201,6 +343,13 @@ describe Spy do
   end
 
   describe '#clean' do
+    it 'unregisters itself with Spy' do
+      spy = Spy.on(mock)
+      expect(Spy.active_spies).to include spy
+      expect { spy.clean }.to change { Spy.active_spies }
+      expect(Spy.active_spies).not_to include spy
+    end
+
     context 'all methods spied on' do
       it 'removes previously created spies' do
         spy = Spy.on(mock)

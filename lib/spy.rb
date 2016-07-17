@@ -3,6 +3,20 @@ require 'spy/version'
 class Spy
   autoload :Call, 'spy/call'
 
+  THREAD_LOCAL_ACTIVE_SPIES_KEY = 'ruby_spy_active_spies'.freeze
+
+  def self.active_spies
+    Thread.current[THREAD_LOCAL_ACTIVE_SPIES_KEY] ||= []
+  end
+
+  def self.register(spy)
+    active_spies << spy unless active_spies.include? spy
+  end
+
+  def self.unregister(spy)
+    active_spies.delete(spy)
+  end
+
   def self.on(obj, method_name = nil)
     spy_with_options(obj, method_name)
   end
@@ -12,7 +26,26 @@ class Spy
   end
 
   def self.spy_with_options(obj, method_name, options = {})
-    new(obj, options).tap { |s| method_name ? s.on(method_name) : s.on_all }
+    new(obj, options).tap do |spy|
+      method_name ? spy.on(method_name) : spy.on_all
+      Spy.register(spy)
+    end
+  end
+
+  def self.clean
+    if block_given?
+      outer_active_spies = active_spies
+      Thread.current[THREAD_LOCAL_ACTIVE_SPIES_KEY] = nil
+
+      begin
+        yield
+      ensure
+        clean
+        Thread.current[THREAD_LOCAL_ACTIVE_SPIES_KEY] = outer_active_spies
+      end
+    else
+      active_spies.dup.each(&:clean)
+    end
   end
 
   attr_reader :obj
@@ -26,10 +59,12 @@ class Spy
 
   def on_all
     all_methods.each { |m| spy_on(m) }
+    Spy.register(self)
   end
 
   def on(method_name)
     spy_on(method_name)
+    Spy.register(self)
   end
 
   def calls(method_name = nil)
@@ -42,6 +77,7 @@ class Spy
 
   def clean
     actively_spied_methods.dup.each { |m| remove_spy(m) }
+    Spy.unregister(self)
   end
 
   def dirty?
