@@ -48,9 +48,15 @@ Spy on all instances of a class:
 
 ```ruby
 spy = Spy.on_all_instances_of(SomeClass)
-SomeClass.new.some_method
-SomeClass.new.some_method
+
+instance_1 = SomeClass.new
+instance_1.some_method
+
+instance_2 = SomeClass.new
+instance_2.some_method
+
 expect(spy.calls.count).to eq 2
+expect(spy.calls[1].receiver).to eq instance_2
 ```
 
 Clean up after yourself:
