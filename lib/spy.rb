@@ -1,4 +1,5 @@
 require 'spy/version'
+require 'securerandom'
 
 class Spy
   autoload :Call, 'spy/call'
@@ -53,8 +54,8 @@ class Spy
   def initialize(obj, all_instances: false)
     @obj = obj
     @calls = []
-    @actively_spied_methods = []
     @all_instances = all_instances
+    @spied_methods_map = {}
   end
 
   def on_all
@@ -76,17 +77,17 @@ class Spy
   end
 
   def clean
-    actively_spied_methods.dup.each { |m| remove_spy(m) }
+    spied_methods_map.keys.each { |m| remove_spy(m) }
     Spy.unregister(self)
   end
 
   def dirty?
-    actively_spied_methods.any?
+    spied_methods_map.keys.any?
   end
 
   private
 
-  attr_reader :all_instances, :actively_spied_methods
+  attr_reader :all_instances, :spied_methods_map
 
   def all_methods
     if spying_on_class?
@@ -120,8 +121,6 @@ class Spy
       spy.calls << Call.new(self, method_name, args, block)
       send aliased_original_method_name, *args, &block
     end
-
-    actively_spied_methods << method_name
   end
 
   def remove_spy(method_name)
@@ -135,7 +134,7 @@ class Spy
 
     target_obj.send(:remove_method, aliased_original_method_name)
 
-    actively_spied_methods.delete(method_name)
+    spied_methods_map.delete method_name
   end
 
   def spying_on_class?
@@ -147,6 +146,9 @@ class Spy
   end
 
   def original_method_name(method_name)
-    "#{method_name}_before_spy".to_sym
+    spied_methods_map[method_name] ||= loop do
+      name_candidate = "#{method_name}_#{SecureRandom.hex(8)}".to_sym
+      break name_candidate unless all_methods.include? name_candidate
+    end
   end
 end
