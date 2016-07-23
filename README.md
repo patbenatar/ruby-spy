@@ -4,7 +4,7 @@ Test spies for Ruby. Why? For fun.
 
 ## Installation
 
-```
+```ruby
 gem 'spies', require: 'spy'
 ```
 
