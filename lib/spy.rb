@@ -117,7 +117,7 @@ class Spy
     )
 
     target_obj.send(:define_method, method_name) do |*args, &block|
-      spy.calls << Call.new(method_name, args, block)
+      spy.calls << Call.new(self, method_name, args, block)
       send aliased_original_method_name, *args, &block
     end
 

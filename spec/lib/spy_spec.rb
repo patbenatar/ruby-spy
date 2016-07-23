@@ -322,6 +322,24 @@ describe Spy do
       expect(spy.calls[0].block).to eq block
     end
 
+    it 'returns the receiver of each call' do
+      mock_class = Class.new do
+        def method_1
+        end
+      end
+
+      spy = Spy.on_all_instances_of(mock_class)
+
+      mock_1 = mock_class.new
+      mock_1.method_1
+
+      mock_2 = mock_class.new
+      mock_2.method_1
+
+      expect(spy.calls[0].receiver).to eq mock_1
+      expect(spy.calls[1].receiver).to eq mock_2
+    end
+
     context 'no methods have been called' do
       it 'returns an empty array' do
         spy = Spy.on(mock)
