@@ -5,14 +5,14 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'spy/version'
 
 Gem::Specification.new do |spec|
-  spec.name = 'ruby_spy'
+  spec.name = 'spies'
   spec.version = Spy::VERSION
   spec.authors = ['Nick Giancola']
-  spec.email = ['nick@gophilosophie.com']
+  spec.email = ['nick@philosophie.is']
 
-  spec.summary = 'Ruby test spy'
-  spec.description = 'Ruby test spy'
-  spec.homepage = 'https://github.com/patbenatar/ruby_spy'
+  spec.summary = 'Ruby test spies'
+  spec.description = 'Ruby test spies'
+  spec.homepage = 'https://github.com/patbenatar/ruby-spy'
   spec.license = 'MIT'
 
   spec.files = `git ls-files -z`
