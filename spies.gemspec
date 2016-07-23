@@ -30,4 +30,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'pry-byebug', '~> 3.4'
   spec.add_development_dependency 'rubocop', '~> 0.41.2'
   spec.add_development_dependency 'coveralls'
+  spec.add_development_dependency 'yard'
+  spec.add_development_dependency 'redcarpet'
 end

@@ -1,5 +1,15 @@
 class Spy::Call
-  attr_reader :receiver, :method_name, :args, :block
+  # @return [Object] object that received the method call
+  attr_reader :receiver
+
+  # @return [Symbol] name of the method called
+  attr_reader :method_name
+
+  # @return [Array<Object>] arguments given to the method call
+  attr_reader :args
+
+  # @return [Proc] block given to the method call, if present
+  attr_reader :block
 
   def initialize(receiver, method_name, args, block)
     @receiver = receiver

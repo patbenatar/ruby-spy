@@ -6,6 +6,12 @@ class Spy
 
   THREAD_LOCAL_ACTIVE_SPIES_KEY = 'ruby_spy_active_spies'.freeze
 
+  ##
+  # Active spies in the current thread.
+  #
+  # @return [Array<Spy>] instances of `Spy` that have active method spies on
+  #                      their target obj
+  #
   def self.active_spies
     Thread.current[THREAD_LOCAL_ACTIVE_SPIES_KEY] ||= []
   end
@@ -18,10 +24,32 @@ class Spy
     active_spies.delete(spy)
   end
 
+  ##
+  # Spy on an instance, class, or module.
+  #
+  # By default, this will spy on all user-defined methods (not methods defined
+  # on Ruby's base Class).
+  #
+  # @param obj [Object] the instance, class, or module to spy on
+  # @param method_name [Symbol] optionally limit spying to a single method
+  #
+  # @return [Spy] an active instance of `Spy` for the given `obj`
+  #
   def self.on(obj, method_name = nil)
     spy_with_options(obj, method_name)
   end
 
+  ##
+  # Spy on all instances of a class.
+  #
+  # By default, this will spy on all user-defined methods (not methods defined
+  # on Ruby's base Class).
+  #
+  # @param obj [Object] the class to spy on
+  # @param method_name [Symbol] optionally limit spying to a single method
+  #
+  # @return [Spy] an active instance of `Spy` for the given `obj`
+  #
   def self.on_all_instances_of(obj, method_name = nil)
     spy_with_options(obj, method_name, all_instances: true)
   end
@@ -33,6 +61,13 @@ class Spy
     end
   end
 
+  ##
+  # Remove all active Spy instances in the current thread and restore their
+  # spied methods to the original state.
+  #
+  # @yield Optionally provide a block, and spies created within the block will
+  #        be cleaned, leaving the outer scope untouched. Blocks can be nested.
+  #
   def self.clean
     if block_given?
       outer_active_spies = active_spies
@@ -49,6 +84,7 @@ class Spy
     end
   end
 
+  # @return [Object] the instance, class, or module being spied on by this spy
   attr_reader :obj
 
   def initialize(obj, all_instances: false)
@@ -58,16 +94,38 @@ class Spy
     @spied_methods_map = {}
   end
 
+  ##
+  # Spy on all user-defined methods on `obj`
+  #
+  # @return [Spy] self
+  #
   def on_all
     all_methods.each { |m| spy_on(m) }
     Spy.register(self)
+    self
   end
 
+  ##
+  # Spy on a single method on `obj`
+  #
+  # @param method_name [Symbol] the method to spy on
+  #
+  # @return [Spy] self
+  #
   def on(method_name)
     spy_on(method_name)
     Spy.register(self)
+    self
   end
 
+  ##
+  # Information about the calls received by this spy
+  #
+  # @param method_name [Symbol] optionally filter results to the given method
+  #
+  # @return [Array<Call>] set of `Call` objects containing information about
+  #                       each method call since the spy was activated.
+  #
   def calls(method_name = nil)
     if method_name
       @calls.select { |c| c.method_name == method_name }
@@ -76,11 +134,22 @@ class Spy
     end
   end
 
+  ##
+  # Remove spy and return spied methods on `obj` to the original state.
+  #
+  # @return [Spy] self
+  #
   def clean
     spied_methods_map.keys.each { |m| remove_spy(m) }
     Spy.unregister(self)
+    self
   end
 
+  ##
+  # Check if spy is actively spying on any methods on `obj`
+  #
+  # @return [Boolean] dirty state
+  #
   def dirty?
     spied_methods_map.keys.any?
   end
