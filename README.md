@@ -1,4 +1,4 @@
-# Ruby Spy [![Build Status](https://travis-ci.org/patbenatar/ruby_spy.svg?branch=master)](https://travis-ci.org/patbenatar/ruby_spy) [![Coverage Status](https://coveralls.io/repos/github/patbenatar/ruby_spy/badge.svg?branch=master)](https://coveralls.io/github/patbenatar/ruby_spy?branch=master)
+# Ruby Spy [![Build Status](https://travis-ci.org/patbenatar/ruby-spy.svg?branch=master)](https://travis-ci.org/patbenatar/ruby-spy) [![Coverage Status](https://coveralls.io/repos/github/patbenatar/ruby-spy/badge.svg?branch=master)](https://coveralls.io/github/patbenatar/ruby-spy?branch=master)
 
 
 Test spies for Ruby. Why? For fun.
