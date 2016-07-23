@@ -25,7 +25,7 @@ end
 describe Spy do
   let(:mock) { MockObject.new }
 
-  before(:each) { Thread.current[Spy::THREAD_LOCAL_ACTIVE_SPIES_KEY] = nil }
+  after(:each) { Spy.clean }
 
   describe '.on' do
     it 'returns a spy' do
@@ -175,6 +175,22 @@ describe Spy do
     it 'resets active_spies to empty' do
       Spy.on(mock)
       expect { Spy.clean }.to change { Spy.active_spies.count }.to(0)
+    end
+
+    context 'an rspec mock is registered as a spy' do
+      it 'unregisters but does not try to clean the mock, to prevent use of ' \
+         'double outside of per-test lifecycle' do
+        rspec_double = double('obj')
+        rspec_spy = spy('obj')
+
+        Spy.register(rspec_double)
+        Spy.register(rspec_spy)
+
+        expect(rspec_double).not_to receive :clean
+        expect(rspec_spy).not_to receive :clean
+
+        expect { Spy.clean }.to change { Spy.active_spies.count }.to(0)
+      end
     end
 
     context 'with a block' do

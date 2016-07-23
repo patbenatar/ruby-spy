@@ -80,8 +80,14 @@ class Spy
         Thread.current[THREAD_LOCAL_ACTIVE_SPIES_KEY] = outer_active_spies
       end
     else
-      active_spies.dup.each(&:clean)
+      active_spies.dup.each do |spy|
+        rspec_mock?(spy) ? unregister(spy) : spy.clean
+      end
     end
+  end
+
+  def self.rspec_mock?(obj)
+    defined?(RSpec::Mocks::Double) && obj.is_a?(RSpec::Mocks::Double)
   end
 
   # @return [Object] the instance, class, or module being spied on by this spy
